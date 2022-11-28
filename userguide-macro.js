@@ -66,6 +66,7 @@ function main() {
   createPanel(config.content);
   // start listening
   xapi.Event.UserInterface.Extensions.Widget.Action.on(processWidget);
+  xapi.Event.UserInterface.Extensions.Panel.Close.on(closeWebview);
 }
 
 main();
@@ -80,6 +81,7 @@ function openWebview(url) {
 }
 
 function closeWebview() {
+  console.log('Closing Webview');
   xapi.Command.UserInterface.WebView.Clear({ Target: config.target });
 }
 
