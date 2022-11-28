@@ -20,7 +20,6 @@ Validated Hardware:
 
 * Room Kit Pro
 * Desk Pro
-* Desk Hub
 * Room Kit
 
 This macro should work on other Webex Devices but has not been validated at this time.
