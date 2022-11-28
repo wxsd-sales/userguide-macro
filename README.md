@@ -27,4 +27,4 @@ This macro should work on other Webex Devices but has not been validated at this
 
 ## Support
 
-Please reach out to the WXSD team at [wxsd@external.cisco.com](mailto:wxsd@external.cisco.com?subject=telemetry-macro).
+Please reach out to the WXSD team at [wxsd@external.cisco.com](mailto:wxsd@external.cisco.com?subject=userguide-macro).
