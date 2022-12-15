@@ -35,6 +35,7 @@ import xapi from 'xapi';
 const config = {
   buttonName: 'User Guide', // The main button name on the UI and its Panel Page Tile
   buttonColor: '#6F739E',
+  showInCall: true,
   content: [
     {
       title: 'How to Join a MS Teams Meeting',    //Button name and modal tile
@@ -94,16 +95,14 @@ function main() {
 main();
 
 async function openWebview(content) {
-
   // Check if there are any inroom navagitors and if none change target to OSD
-  if (content.target == 'Controller') {
-    content.target = await inRoomNavigators ? 'Controller' : 'OSD'
-    console.log('Controller Target set to: ' + content.target);
+  if (content.target == 'Controller' && !await inRoomNavigators()) {
+    content.target = 'OSD';
+    console.log('No In Room Navigators changing target to OSD');
   }
 
   console.log('Active timers:' + JSON.stringify(timers))
   clearTimeout(timers[content.target])
-
 
   console.log('Opening: ' + content.title);
   xapi.Command.UserInterface.WebView.Display({
@@ -121,7 +120,11 @@ async function openWebview(content) {
 }
 
 // Close the Webview
-function closeWebview(target) {
+async function closeWebview(target) {
+  if (!await inRoomNavigators()) {
+    target = 'OSD';
+    console.log('No In Room Navigators changing to OSD');
+  }
   console.log('Closing Webview on: ' + target);
   xapi.Command.UserInterface.WebView.Clear({ Target: target });
 }
@@ -142,7 +145,7 @@ function inRoomNavigators() {
 
 // Process Widget Clicks
 async function processWidget(e) {
-  console.log('Widget Event ' + e.WidgetId)
+  //console.log('Widget Event ' + e.WidgetId)
   if (e.Type !== 'clicked' || !e.WidgetId.startsWith('userguide_option')) return
   const widgets = await xapi.Status.UserInterface.Extensions.Widget.get();
   const widget = widgets.filter(widget => widget.WidgetId == e.WidgetId);
@@ -186,7 +189,7 @@ function createPanel() {
     <Extensions>
     <Version>1.9</Version>
     <Panel>
-      <Location>HomeScreen</Location>
+      <Location>${config.showInCall ? 'HomeScreenAndCallControls' : 'HomeScreen'}</Location>
       <Icon>Help</Icon>
       <Color>${config.buttonColor}</Color>
       <Name>${config.buttonName}</Name>
