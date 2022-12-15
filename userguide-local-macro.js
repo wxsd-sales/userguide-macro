@@ -34,7 +34,7 @@ import xapi from 'xapi';
 
 const config = {
   buttonName: 'User Guide', // The main button name on the UI and its Panel Page Tile
-  buttonColor: '#FC5143',
+  buttonColor: '#6F739E',
   content: [
     {
       title: 'How to Join a MS Teams Meeting',    //Button name and modal tile
@@ -188,7 +188,7 @@ function createPanel() {
     <Panel>
       <Location>HomeScreen</Location>
       <Icon>Help</Icon>
-      <Color>#FC5143</Color>
+      <Color>${config.buttonColor}</Color>
       <Name>${config.buttonName}</Name>
       <ActivityType>Custom</ActivityType>
       <Page>
