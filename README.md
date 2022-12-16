@@ -1,8 +1,9 @@
 # User Guide Macro
 This Webex Device macro enables you to display user guides as webviews on your devices main display or Room Navigator
 
-## Requirements
+![ezgif com-gif-maker (3)](https://user-images.githubusercontent.com/21026209/208012076-694d40b2-f1e2-4f83-804a-62067069a8ce.gif)
 
+## Requirements
 1. RoomOS/CE 10.x or above Webex Device (10.18.x for Room Navigator web views).
 2. Web admin access to the device to uplaod the macro.
 3. Network connectivity for your Webex Device to open the webview content you want to display.
