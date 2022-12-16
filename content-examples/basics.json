@@ -1,37 +1,37 @@
 [
   {
-  title: 'How to Join a MS Teams Meeting',    //Button name and modal tile
-  url: 'https://www.youtube.com/embed/TJkz7oxIrOw?start=40&autoplay=1', // URL to be displayed
-  target: 'OSD',  // The target screen, either OSD or Controller (Navigator)
-  mode: 'Modal', // Can be Fullscreen or Modal
-  autoclose: 40 // Time in seconds before web view auto closes, remove or set to null to prevent auto close
-},
-{
-  title: 'How to Join a Webex Meeting',
-  url: 'https://www.youtube.com/embed/GyXu1qQ8NsI?start=40&autoplay=1',
-  target: 'OSD',
-  mode: 'Fullscreen',
-  autoclose: 40
-},
-{
-  title: 'How to Join a Google Meeting',
-  url: 'https://www.youtube.com/embed/8JX-_FxsO8g?start=39&autoplay=1',
-  target: 'OSD',
-  mode: 'Modal',
-  autoclose: 30
-},
-{
-  title: 'How to share your Laptop or Phone screen',
-  url: 'https://www.youtube.com/embed/TJkz7oxIrOw?start=62&autoplay=1',
-  target: 'Controller',
-  mode: 'Modal',
-  autoclose: 30
-},
-{
-  title: 'How to Share using Airplay',
-  url: 'https://www.youtube.com/embed/u4fv9qqL37U?autoplay=1',
-  target: 'OSD',
-  mode: 'Modal',
-  autoclose: 40
-}
+    "title": "How to Join a MS Teams Meeting",
+    "url": "https://www.youtube.com/embed/TJkz7oxIrOw?start=40&autoplay=1",
+    "target": "OSD",
+    "mode": "Modal",
+    "autoclose": 40
+  },
+  {
+    "title": "How to Join a Webex Meeting",
+    "url": "https://www.youtube.com/embed/GyXu1qQ8NsI?start=40&autoplay=1",
+    "target": "OSD",
+    "mode": "Fullscreen",
+    "autoclose": 40
+  },
+  {
+    "title": "How to Join a Google Meeting",
+    "url": "https://www.youtube.com/embed/8JX-_FxsO8g?start=39&autoplay=1",
+    "target": "OSD",
+    "mode": "Modal",
+    "autoclose": 30
+  },
+  {
+    "title": "How to share your Laptop or Phone screen",
+    "url": "https://www.youtube.com/embed/TJkz7oxIrOw?start=62&autoplay=1",
+    "target": "Controller",
+    "mode": "Modal",
+    "autoclose": 30
+  },
+  {
+    "title": "How to Share using Airplay",
+    "url": "https://www.youtube.com/embed/u4fv9qqL37U?autoplay=1",
+    "target": "OSD",
+    "mode": "Modal",
+    "autoclose": 40
+  }
 ]
