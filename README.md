@@ -3,6 +3,13 @@ This Webex Device macro enables you to display user guides as webviews on your d
 
 ![ezgif com-gif-maker (3)](https://user-images.githubusercontent.com/21026209/208012076-694d40b2-f1e2-4f83-804a-62067069a8ce.gif)
 
+## Features
+
+1. Displays a list of locally configured or remotely fetched content in a Button / Panel on the Webex Device
+2. Each URL content can be set to display on either the main OSD or an in room Navigator
+  - If no navigator is present, the content will be opened on the OSD instead.
+3. Each content can be set to auto close after a set time. So in the case where the content is an auto played video, once it has finished the content is closed without requiring the user to do so. Each content option can have its own auto close time set in the configuration.
+
 ## Requirements
 1. RoomOS/CE 10.x or above Webex Device (10.18.x for Room Navigator web views).
 2. Web admin access to the device to uplaod the macro.
