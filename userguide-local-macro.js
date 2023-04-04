@@ -187,7 +187,6 @@ function createPanel() {
   }
   const panel = `
     <Extensions>
-    <Version>1.9</Version>
     <Panel>
       <Location>${config.showInCall ? 'HomeScreenAndCallControls' : 'HomeScreen'}</Location>
       <Icon>Help</Icon>
