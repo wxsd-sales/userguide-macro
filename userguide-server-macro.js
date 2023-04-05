@@ -54,7 +54,7 @@ async function main() {
   // Set config
   xapi.Config.WebEngine.Mode.set('On');
   // Create panel UI and update active
-  createPanel(config.button, await getContent(config.contentServer));
+  createPanel(config.button, await getContent(config.contentServer), config.panelId);
   updatedUI();
   // Start listening to Events and Statuses
   xapi.Event.UserInterface.Extensions.Widget.Action.on(processWidget);
@@ -144,7 +144,7 @@ async function updatedUI() {
 
 async function panelClicked(event) {
   if(event.PanelId !== 'userguide') return;
-  createPanel(config.button, await getContent(config.contentServer))
+  createPanel(config.button, await getContent(config.contentServer), config.panelId)
 }
 
 function getContent(server){
@@ -160,7 +160,7 @@ function getContent(server){
   })
 }
 
-function createPanel(button, content) {
+function createPanel(button, content, panelId) {
   links = content;
   console.log('Creating Panel')
   let rows = '';
@@ -178,7 +178,7 @@ function createPanel(button, content) {
     for (let i = 0; i < content.length; i++) {
       const row = `<Row>
           <Widget>
-            <WidgetId>userguide_option_${i}</WidgetId>
+            <WidgetId>${panelId}_option_${i}</WidgetId>
             <Name>${content[i].title}</Name>
             <Type>Button</Type>
             <Options>size=4</Options>
@@ -204,5 +204,5 @@ function createPanel(button, content) {
     </Panel>
   </Extensions>`;
   
-  xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: config.panelId }, panel);
+  xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: panelId }, panel);
 } 
