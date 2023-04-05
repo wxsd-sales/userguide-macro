@@ -89,7 +89,7 @@ function main() {
   // Set config
   xapi.Config.WebEngine.Mode.set('On');
   // Create panel UI and update active
-  createPanel(config.button, config.content);
+  createPanel(config.button, config.content, config.panelId);
   updatedUI(null);
   // Start listening to Events and Statuses
   xapi.Event.UserInterface.Extensions.Widget.Action.on(processWidget);
@@ -178,25 +178,38 @@ async function updatedUI() {
   })
 }
 
-function createPanel(button, content) {
+function createPanel(button, content, panelId) {
+  console.log('Creating Panel')
   let rows = '';
-  for (let i = 0; i < content.length; i++) {
-    const row = `<Row>
+  if(content == undefined || content.length < 0){
+    console.log('No content');
+    rows = `<Row>
         <Widget>
-          <WidgetId>userguide_option_${i}</WidgetId>
-          <Name>${content[i].title}</Name>
-          <Type>Button</Type>
-          <Options>size=4</Options>
+          <WidgetId>userguide_no_content</WidgetId>
+          <Name>No Content Available</Name>
+          <Type>Text</Type>
+          <Options>size=4;fontSize=normal;align=center</Options>
         </Widget>
       </Row>`;
-    rows = rows.concat(row);
+  } else {
+    for (let i = 0; i < content.length; i++) {
+      const row = `<Row>
+          <Widget>
+            <WidgetId>${panelId}_option_${i}</WidgetId>
+            <Name>${content[i].title}</Name>
+            <Type>Button</Type>
+            <Options>size=4</Options>
+          </Widget>
+        </Row>`;
+      rows = rows.concat(row);
+    }
   }
   const panel = `
     <Extensions>
     <Panel>
       <Location>${button.showInCall ? 'HomeScreenAndCallControls' : 'HomeScreen'}</Location>
       <Type>${button.showInCall ? 'Statusbar' : 'Home'}</Type>
-      <Icon>Help</Icon>
+      <Icon>${button.icon}</Icon>
       <Color>${button.color}</Color>
       <Name>${button.name}</Name>
       <ActivityType>Custom</ActivityType>
@@ -207,5 +220,6 @@ function createPanel(button, content) {
       </Page>
     </Panel>
   </Extensions>`;
-  xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: config.panelId }, panel);
+  
+  xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: panelId }, panel);
 } 
