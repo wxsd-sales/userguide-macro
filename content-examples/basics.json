@@ -33,5 +33,12 @@
     "target": "OSD",
     "mode": "Modal",
     "autoclose": 40
+  },
+  {
+    "title": "How to Share using Airplay (Navigator)",
+    "url": "https://www.youtube.com/embed/u4fv9qqL37U?autoplay=1",
+    "target": "Controller",
+    "mode": "Fullscreen",
+    "autoclose": 40
   }
 ]
