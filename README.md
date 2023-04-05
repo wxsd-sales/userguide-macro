@@ -17,7 +17,7 @@ This Webex Device macro enables you to display user guides as webviews on your d
 
 ## Setup
 
-1. Download the ``userguide-macro.js`` file and upload it to your Webex Room devices Macro editor via the web interface.
+1. Download the ``userguide-*-macro.js`` file and upload it to your Webex Room devices Macro editor via the web interface.
 2. Configure the Macro by changing the initial values, there are comments explaining each one.
 3. Enable the Macro on the editor.
 
