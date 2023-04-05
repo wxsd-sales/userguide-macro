@@ -16,8 +16,8 @@ or implied.
  *                    	wimills@cisco.com
  *                    	Cisco Systems
  * 
- * Version: 1-0-1
- * Released: 11/29/22
+ * Version: 1-0-2
+ * Released: 04/05/23
  * 
  * This Webex Device macro enables you to display user guides as
  * webviews on your devices main display or Room Navigator.
@@ -33,11 +33,14 @@ import xapi from 'xapi';
 **********************************************************/
 
 const config = {
-  buttonName: 'User Guide', // The main button name on the UI and its Panel Page Tile
-  buttonColor: '#6F739E',
-  showInCall: true,
+  button: {
+    name: 'User Guide', // The main button name on the UI and its Panel Page Tile
+    color: '#6F739E',   // Color of the button
+    icon: 'Help',       // Specify which prebuilt icon you want. eg. Concierge | Tv
+    showInCall: true
+  },
   content: [
-    {
+     {
       title: 'How to Join a MS Teams Meeting',    //Button name and modal tile
       url: 'https://www.youtube.com/embed/TJkz7oxIrOw?start=40&autoplay=1', // URL to be displayed
       target: 'OSD',  // The target screen, either OSD or Controller (Navigator)
@@ -72,7 +75,8 @@ const config = {
       mode: 'Modal',
       autoclose: 40
     }
-  ]
+  ],
+  panelId: 'userguide' // Modify if you have multiple copies of this marcro on a single device
 }
 
 /*********************************************************
@@ -85,7 +89,7 @@ function main() {
   // Set config
   xapi.Config.WebEngine.Mode.set('On');
   // Create panel UI and update active
-  createPanel(config.content);
+  createPanel(config.button, config.content);
   updatedUI(null);
   // Start listening to Events and Statuses
   xapi.Event.UserInterface.Extensions.Widget.Action.on(processWidget);
@@ -116,7 +120,7 @@ async function openWebview(content) {
       console.log('Auto closing content in: ' + content.autoclose + ' seconds')
       timers[content.target] = setTimeout(closeWebview, content.autoclose * 1000, content.target);
     })
-    .catch(e => console.log('Error: ' + e))
+    .catch(e => console.log('Error: ' + e.message))
 }
 
 // Close the Webview
@@ -134,7 +138,7 @@ function inRoomNavigators() {
   return xapi.Status.Peripherals.ConnectedDevice.get()
     .then(devices => {
       return devices.filter(d => {
-        return d.Name == 'Cisco Webex Room Navigator' && d.Location == 'InsideRoom'
+        return d.Name.endsWith('Room Navigator') && d.Location == 'InsideRoom'
       }).length > 0;
     })
     .catch(e => {
@@ -146,7 +150,7 @@ function inRoomNavigators() {
 // Process Widget Clicks
 async function processWidget(e) {
   //console.log('Widget Event ' + e.WidgetId)
-  if (e.Type !== 'clicked' || !e.WidgetId.startsWith('userguide_option')) return
+  if (e.Type !== 'clicked' || !e.WidgetId.startsWith(config.panelId+'_option')) return
   const widgets = await xapi.Status.UserInterface.Extensions.Widget.get();
   const widget = widgets.filter(widget => widget.WidgetId == e.WidgetId);
   const num = e.WidgetId.split('_').pop();
@@ -164,21 +168,23 @@ async function updatedUI() {
   const views = await xapi.Status.UserInterface.WebView.get()
   //console.log(views)
   config.content.forEach((content, index) => {
-    const visiable = views.filter(e => e.URL.includes(content.url)).length > 0;
+    const visiable = views.filter(e => {
+      return e.URL.includes(content.url) && e.Type =='Integration' && e.Status == 'Visible'
+      }).length > 0;
     xapi.Command.UserInterface.Extensions.Widget.SetValue({
       Value: visiable ? 'active' : 'inactive',
-      WidgetId: 'userguide_option_' + index
+      WidgetId: config.panelId + '_option_' + index
     })
   })
 }
 
-function createPanel() {
+function createPanel(button, content) {
   let rows = '';
-  for (let i = 0; i < config.content.length; i++) {
+  for (let i = 0; i < content.length; i++) {
     const row = `<Row>
         <Widget>
           <WidgetId>userguide_option_${i}</WidgetId>
-          <Name>${config.content[i].title}</Name>
+          <Name>${content[i].title}</Name>
           <Type>Button</Type>
           <Options>size=4</Options>
         </Widget>
@@ -188,17 +194,18 @@ function createPanel() {
   const panel = `
     <Extensions>
     <Panel>
-      <Location>${config.showInCall ? 'HomeScreenAndCallControls' : 'HomeScreen'}</Location>
+      <Location>${button.showInCall ? 'HomeScreenAndCallControls' : 'HomeScreen'}</Location>
+      <Type>${button.showInCall ? 'Statusbar' : 'Home'}</Type>
       <Icon>Help</Icon>
-      <Color>${config.buttonColor}</Color>
-      <Name>${config.buttonName}</Name>
+      <Color>${button.color}</Color>
+      <Name>${button.name}</Name>
       <ActivityType>Custom</ActivityType>
       <Page>
-        <Name>${config.buttonName}</Name>
+        <Name>${button.name}</Name>
         ${rows}
         <Options>hideRowNames=1</Options>
       </Page>
     </Panel>
   </Extensions>`;
-  xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: 'userguide' }, panel);
+  xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: config.panelId }, panel);
 } 
