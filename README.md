@@ -1,24 +1,29 @@
 # User Guide Macro
-This Webex Device macro enables you to display user guides as webviews on your devices main display or Room Navigator
+
+This Webex Device macro enables you to display user guides as WebViews on your devices main display or Room Navigator
 
 ![ezgif com-gif-maker (3)](https://user-images.githubusercontent.com/21026209/208012076-694d40b2-f1e2-4f83-804a-62067069a8ce.gif)
 
-## Features
+## Overview
 
-- Displays a list of locally configured or remotely fetched content in a Button / Panel on the Webex Device
-- Each URL content can be set to displayed on either the main OSD or a Webex Room Navigator
-  - If no Navigator is present ( the user guide panel is open on a Touch 10 for example), the content will be opened on the OSD instead.
-- Each content can be set to auto close after a set time. So in the case where the content is an auto played video, once it has finished the content is closed without requiring the user to do so. Each content option can have its own auto close timer set in the configuration.
-   - At any time, the user can close the content by tapping on the same button they used to open it with
+- Displays a list of locally configured or remotely fetched content in a Button / Panel UI Extension on the Webex Device
+- Tapping on any of the generated buttons in the panel will open the associated content on main OSD or a Webex Room Navigator
+  - If no Navigator is present and the target content is set to 'Controller', the content will be opened on the OSD instead.
+- Each content WebView can be configured with to auto close value in seconds if required. So in the case where the content is an auto played video, once it has finished playing, the content is closed without requiring the user to do so. Each content option can have its own unique auto close timer value.
+   - At any time, the user can close the content by tapping on the same button they used to open it
 
+### Flow Diagram
+
+![image](https://user-images.githubusercontent.com/21026209/235316328-4960af63-63fb-4716-b1a6-1620156e92ec.png)
 
 ## Setup
 
-## Requirements:
+### Prerequisites & Dependencies: 
 
-- RoomOS/CE 10.x or above Webex Device (10.18.x for Room Navigator web views).
-- Web admin access to the device to uplaod the macro.
-- Network connectivity for your Webex Device to open the webview content you want to display.
+- RoomOS/CE 10.x or above Webex Device (10.18.x for Room Navigator WebViews)
+- Web admin access to the device to upload the macro
+- Network connectivity for your Webex Device to open the WebView content you want to display
+- For server hosted content, a web server hosting JSON formatted content information. An example is available [here](content-examples/basics.json)
 
 ### Installation Steps:
 
@@ -48,7 +53,7 @@ All contents are licensed under the MIT license. Please see [license](LICENSE) f
 
 ## Disclaimer
 
-Everything included is for demo and Proof of Concept purposes only. Use of the site is solely at your own risk. This site may contain links to third party content, which we do not warrant, endorse, or assume liability for. These demos are for Cisco Webex usecases, but are not Official Cisco Webex Branded demos.
+Everything included is for demo and Proof of Concept purposes only. Use of the site is solely at your own risk. This site may contain links to third party content, which we do not warrant, endorse, or assume liability for. These demos are for Cisco Webex use cases, but are not Official Cisco Webex Branded demos.
 
 
 ## Questions
