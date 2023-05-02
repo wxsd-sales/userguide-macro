@@ -125,7 +125,7 @@ function convertTarget(target) {
         return d.Name.endsWith('Room Navigator') && d.Location == 'InsideRoom'
       })
       if( navigators.length == 0){
-        console.log(`No in room navigators, changing WebView target to OSD`);
+        console.log(`No InsideRoom Navigators, changing WebView target to OSD`);
         return 'OSD';
       } else {
         return target;
