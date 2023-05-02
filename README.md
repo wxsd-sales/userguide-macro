@@ -36,9 +36,11 @@ This Webex Device macro enables you to display user guides as WebViews on your d
 
 Validated Hardware:
 
-* Room Kit Pro
-* Desk Pro
-* Room Kit
+* Room Kit Pro + Touch 10
+* Room Kit Plus + Touch 10
+* Room Kit + Touch 10
+* Board 55 + Touch 10
+* Desk Pro + Room Navigator
 
 This macro should work on other Webex Devices with WebEngine support but has not been validated at this time.
 
