@@ -5,13 +5,13 @@
  *                    	wimills@cisco.com
  *                    	Cisco Systems
  * 
- * Version: 1-0-2
- * Released: 04/05/23
+ * Version: 1-0-3
+ * Released: 04/02/23
  * 
  * This Webex Device macro enables you to display user guides as
  * webviews on your devices main display or Room Navigator.
  * 
- * Full Readme and source code available on Github:
+ * Full Readme, source code and license details available here:
  * https://github.com/wxsd-sales/userguide-macro
  * 
  ********************************************************/
@@ -42,75 +42,78 @@ let links = [];
 async function main() {
   // Set config
   xapi.Config.WebEngine.Mode.set('On');
+  xapi.Config.HttpClient.Mode.set('On');
   // Create panel UI and update active
-  createPanel(config.button, await getContent(config.contentServer), config.panelId);
+  await createPanel(config.button, await getContent(config.contentServer), config.panelId);
   updatedUI();
   // Start listening to Events and Statuses
   xapi.Event.UserInterface.Extensions.Widget.Action.on(processWidget);
-  xapi.Status.UserInterface.WebView.on(updatedUI)
   xapi.Event.UserInterface.Extensions.Panel.Clicked.on(panelClicked);
+  xapi.Status.UserInterface.WebView.on(updatedUI)
+  
 }
 
-setTimeout(main, 2000);
+setTimeout(main, 1000);
 
 async function openWebview(content) {
-  // Check if there are any inroom navagitors and if none change target to OSD
-  if (content.target == 'Controller' && !await inRoomNavigators()) {
-    content.target = 'OSD';
-    console.log('No In Room Navigators changing target to OSD');
-  }
+  // Convert Controller target to OSD if there are no navigators
+  const target = await convertTarget(content.target)
 
-  console.log('Active timers:' + JSON.stringify(timers))
-  clearTimeout(timers[content.target])
+  // Clear any auto close timers running for target
+  clearTimeout(timers[target])
 
-  console.log('Opening: ' + content.title);
+  console.log(`Opening [${content.title}] on [${target}]`);
   xapi.Command.UserInterface.WebView.Display({
     Mode: content.mode,
     Title: content.title,
-    Target: content.target,
+    Target: target,
     Url: content.url
   })
-    .then(r => {
+    .then(result => {
       if (!content.hasOwnProperty('autoclose') || content.autoclose == null) return;
-      console.log('Auto closing content in: ' + content.autoclose + ' seconds')
-      timers[content.target] = setTimeout(closeWebview, content.autoclose * 1000, content.target);
+      console.log(`Auto closing content in [${content.autoclose}] seconds`)
+      timers[target] = setTimeout(closeWebview, content.autoclose * 1000, target);
     })
-    .catch(e => console.log('Error: ' + e))
+    .catch(e => console.log('Error: ' + e.message))
 }
 
 // Close the Webview
 async function closeWebview(target) {
-  if (!await inRoomNavigators()) {
-    target = 'OSD';
-    console.log('No In Room Navigators changing to OSD');
-  }
-  console.log('Closing Webview on: ' + target);
+  target = await convertTarget(target);
+  console.log(`Closing Webview on [${target}]`);
   xapi.Command.UserInterface.WebView.Clear({ Target: target });
 }
 
 // Identify if there are any in room navigators
-function inRoomNavigators() {
+function convertTarget(target) {
+  if(target === 'OSD') return 'OSD';
   return xapi.Status.Peripherals.ConnectedDevice.get()
     .then(devices => {
-      return devices.filter(d => {
+      const navigators = devices.filter(d => {
         return d.Name.endsWith('Room Navigator') && d.Location == 'InsideRoom'
-      }).length > 0;
+      })
+      if( navigators.length == 0){
+        console.log(`No InsideRoom Navigators, changing WebView target to OSD`);
+        return 'OSD';
+      } else {
+        return target;
+      }
     })
     .catch(e => {
-      console.log('No connected devices')
-      return false
+      console.log('No connected devices, changing WebView target to OSD`')
+      return 'OSD'
     })
 }
 
 // Process Widget Clicks
 async function processWidget(e) {
-  console.log('Widget Event ' + e.WidgetId)
-  if (e.Type !== 'clicked' || !e.WidgetId.startsWith(config.panelId+'_option')) return
+  if (e.Type !== 'clicked' || !e.WidgetId.startsWith(config.panelId+'-option')) return
   const widgets = await xapi.Status.UserInterface.Extensions.Widget.get();
   const widget = widgets.filter(widget => widget.WidgetId == e.WidgetId);
-  const num = e.WidgetId.split('_').pop();
-  console.log('Button Clicked: ' + links[num].target)
+  const num = e.WidgetId.split('-').pop();
+  console.log(`User Guide Button Clicked [${links[num].title}]`)
   if (widget[0].Value == 'active') {
+    console.log(`Content [${links[num].title}] already active, closing`)
     closeWebview(links[num].target);
     return;
   }
@@ -119,14 +122,16 @@ async function processWidget(e) {
 
 // Updates the UI and show which content is visiable 
 async function updatedUI() {
-  console.log('Updating UI')
-  const views = await xapi.Status.UserInterface.WebView.get()
-  //console.log(views)
+  console.log(`Updating UI for panel [${config.panelId}]`);
+  const views = await xapi.Status.UserInterface.WebView.get();
+  console.log(`Number of WebViews [${views.length}]`);
   links.forEach((content, index) => {
-    const visiable = views.filter(e => e.URL.includes(content.url)).length > 0;
+    const visiable = views.filter(view => {
+      return view.URL.includes(content.url) && view.Type =='Integration' && view.Status == 'Visible'
+      }).length > 0;
     xapi.Command.UserInterface.Extensions.Widget.SetValue({
       Value: visiable ? 'active' : 'inactive',
-      WidgetId: 'userguide_option_' + index
+      WidgetId: config.panelId + '-option-' + index
     })
   })
 }
@@ -151,34 +156,29 @@ function getContent(server){
 
 function createPanel(button, content, panelId) {
   links = content;
-  console.log('Creating Panel')
+  console.log(`Creating Panel [${panelId}]`);
   let rows = '';
   if(content == undefined || content.length < 0){
-    console.log('No content');
-    rows = `<Row>
-        <Widget>
-          <WidgetId>userguide_no_content</WidgetId>
-          <Name>No Content Available</Name>
-          <Type>Text</Type>
-          <Options>size=4;fontSize=normal;align=center</Options>
-        </Widget>
-      </Row>`;
+    console.log(`No content available to show for [${panelId}]`);
+    rows = `<Row><Widget>
+            <WidgetId>${panelId}-no-content</WidgetId>
+            <Name>No Content Available</Name>
+            <Type>Text</Type>
+            <Options>size=4;fontSize=normal;align=center</Options>
+            </Widget></Row>`;
   } else {
     for (let i = 0; i < content.length; i++) {
-      const row = `<Row>
-          <Widget>
-            <WidgetId>${panelId}_option_${i}</WidgetId>
-            <Name>${content[i].title}</Name>
-            <Type>Button</Type>
-            <Options>size=4</Options>
-          </Widget>
-        </Row>`;
+      const row = `<Row><Widget>
+                  <WidgetId>${panelId}-option-${i}</WidgetId>
+                  <Name>${content[i].title}</Name>
+                  <Type>Button</Type>
+                  <Options>size=4</Options>
+                  </Widget></Row>`;
       rows = rows.concat(row);
     }
   }
   const panel = `
-    <Extensions>
-    <Panel>
+    <Extensions><Panel>
       <Location>${button.showInCall ? 'HomeScreenAndCallControls' : 'HomeScreen'}</Location>
       <Type>${button.showInCall ? 'Statusbar' : 'Home'}</Type>
       <Icon>${button.icon}</Icon>
@@ -190,8 +190,7 @@ function createPanel(button, content, panelId) {
         ${rows}
         <Options>hideRowNames=1</Options>
       </Page>
-    </Panel>
-  </Extensions>`;
+    </Panel></Extensions>`;
   
-  xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: panelId }, panel);
+  return xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: panelId }, panel);
 } 
