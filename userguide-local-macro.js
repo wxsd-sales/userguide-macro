@@ -5,7 +5,7 @@
  *                    	wimills@cisco.com
  *                    	Cisco Systems
  * 
- * Version: 1-0-3
+ * Version: 1-0-4
  * Released: 04/02/23
  * 
  * This Webex Device macro enables you to display user guides as
@@ -88,10 +88,8 @@ async function main() {
 main();
 
 async function openWebview(content) {
-  // Convert Controller target to OSD if there are no navigators
   const target = await convertTarget(content.target)
 
-  // Clear any auto close timers running for target
   clearTimeout(timers[target])
 
   console.log(`Opening [${content.title}] on [${target}]`);
@@ -125,7 +123,7 @@ function convertTarget(target) {
         return d.Name.endsWith('Room Navigator') && d.Location == 'InsideRoom'
       })
       if( navigators.length == 0){
-        console.log(`No InsideRoom Navigators, changing WebView target to OSD`);
+        console.log(`No in room navigators, changing WebView target to OSD`);
         return 'OSD';
       } else {
         return target;
@@ -159,13 +157,20 @@ async function updatedUI() {
   console.log(`Number of WebViews [${views.length}]`);
   config.content.forEach((content, index) => {
     const visiable = views.filter(view => {
-      return view.URL.includes(content.url) && view.Type =='Integration' && view.Status == 'Visible'
+      if(!compareURLs(view.URL, content.url)) return false;
+      return (view.Type =='Integration' && view.Status == 'Visible');
       }).length > 0;
     xapi.Command.UserInterface.Extensions.Widget.SetValue({
       Value: visiable ? 'active' : 'inactive',
       WidgetId: config.panelId + '-option-' + index
     })
   })
+}
+
+function compareURLs(a, b){
+  a = decodeURIComponent(a).trim();
+  b = decodeURIComponent(b).trim();
+  return a.includes(b)
 }
 
 function createPanel(button, content, panelId) {
