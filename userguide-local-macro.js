@@ -5,7 +5,7 @@
  *                    	wimills@cisco.com
  *                    	Cisco Systems
  * 
- * Version: 1-0-4
+ * Version: 1-0-5
  * Released: 04/02/23
  * 
  * This Webex Device macro enables you to display user guides as
@@ -26,12 +26,14 @@ const config = {
     name: 'User Guide', // The main button name on the UI and its Panel Page Tile
     color: '#6F739E',   // Color of the button
     icon: 'Help',       // Specify which prebuilt icon you want. eg. Concierge | Tv
-    showInCall: true
+    title: 'Tap to open and close content',
+    showInCall: true,
+    closeContentWithPanel: true // Automatically close any open content when the panel closes
   },
   content: [
     {
       title: 'How to Join a MS Teams Meeting',    //Button name and modal tile
-      url: 'https://www.youtube.com/embed/TJkz7oxIrOw?start=40&autoplay=1', // URL to be displayed
+      url: 'https://www.youtube.com/embed/TJkz7oxIrOw?start=40&autoplay=1 ', // URL to be displayed
       target: 'OSD',  // The target screen, either OSD or Controller (Navigator)
       mode: 'Modal', // Can be Fullscreen or Modal
       autoclose: 40 // Time in seconds before web view auto closes, remove or set to null to prevent auto close
@@ -72,20 +74,31 @@ const config = {
  * Below contains all the call event listeners
 **********************************************************/
 
-let timers = {};
+let loading = false;
 
-async function main() {
-  // Set config
-  xapi.Config.WebEngine.Mode.set('On');
-  // Create panel UI and update active
-  await createPanel(config.button, config.content, config.panelId);
-  updatedUI();
-  // Start listening to Events and Statuses
-  xapi.Event.UserInterface.Extensions.Widget.Action.on(processWidget);
-  xapi.Status.UserInterface.WebView.on(updatedUI)
+xapi.Event.UserInterface.Extensions.Event.PageClosed.on(processPageClose);
+
+// Close the Webview on the OSD if the panel has been closed on the touch
+function processPageClose(event){
+  if(event.PageId != config.panelId+'-page') return;
+  if(!config.button.closeContentWithPanel) return;
+  if(loading)return;
+
+  console.log('User Guide Panel has been closed, closing open content');
+  xapi.Command.UserInterface.WebView.Clear({ Target: 'OSD' });
 }
 
-main();
+xapi.Config.WebEngine.Mode.set('On')
+  .then(result => {
+    createPanel(config.button, config.content, config.panelId);
+    updatedUI();
+    // Start listening to Events and Statuses
+    xapi.Event.UserInterface.Extensions.Widget.Action.on(processWidget);
+    xapi.Status.UserInterface.WebView.on(updatedUI)
+  })
+  .catch(error => console.warn('Unable to enable WebEgine, the feature may not be supported on this device.'))
+  
+let timers = {};
 
 async function openWebview(content) {
   const target = await convertTarget(content.target)
@@ -93,6 +106,10 @@ async function openWebview(content) {
   clearTimeout(timers[target])
 
   console.log(`Opening [${content.title}] on [${target}]`);
+  loading = true;
+  setTimeout(()=>{
+    loading = false;
+  }, 1000)
   xapi.Command.UserInterface.WebView.Display({
     Mode: content.mode,
     Title: content.title,
@@ -204,8 +221,9 @@ function createPanel(button, content, panelId) {
       <Name>${button.name}</Name>
       <ActivityType>Custom</ActivityType>
       <Page>
-        <Name>${button.name}</Name>
+        <Name>${button.title}</Name>
         ${rows}
+        <PageId>${panelId}-page</PageId>
         <Options>hideRowNames=1</Options>
       </Page>
     </Panel></Extensions>`;
