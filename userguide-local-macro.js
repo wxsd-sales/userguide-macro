@@ -94,7 +94,8 @@ xapi.Config.WebEngine.Mode.set('On')
     updatedUI();
     // Start listening to Events and Statuses
     xapi.Event.UserInterface.Extensions.Widget.Action.on(processWidget);
-    xapi.Status.UserInterface.WebView.on(updatedUI)
+    xapi.Status.UserInterface.WebView.on(updatedUI);
+    xapi.Config.WebEngine.Features.Peripherals.AudioOutput.set('On');
   })
   .catch(error => console.warn('Unable to enable WebEgine, the feature may not be supported on this device.'))
   
