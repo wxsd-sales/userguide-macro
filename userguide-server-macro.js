@@ -49,7 +49,8 @@ async function main() {
   // Start listening to Events and Statuses
   xapi.Event.UserInterface.Extensions.Widget.Action.on(processWidget);
   xapi.Event.UserInterface.Extensions.Panel.Clicked.on(panelClicked);
-  xapi.Status.UserInterface.WebView.on(updatedUI)
+  xapi.Status.UserInterface.WebView.on(updatedUI);
+  xapi.Config.WebEngine.Features.Peripherals.AudioOutput.set('On');
   
 }
 
