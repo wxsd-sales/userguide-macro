@@ -5,11 +5,14 @@
  *                    	wimills@cisco.com
  *                    	Cisco Systems
  * 
- * Version: 1-0-5
- * Released: 04/02/23
+ * Version: 1-0-6
+ * Released: 10/02/26
  * 
  * This Webex Device macro enables you to display user guides as
  * webviews on your devices main display or Room Navigator.
+ * 
+ * 1-0-6:
+ * Updated example videos to use custom embedded player webapp.
  * 
  * Full Readme, source code and license details available here:
  * https://github.com/wxsd-sales/userguide-macro
@@ -33,35 +36,35 @@ const config = {
   content: [
     {
       title: 'How to Join a MS Teams Meeting',    //Button name and modal tile
-      url: 'https://www.youtube.com/embed/TJkz7oxIrOw?start=40&autoplay=1 ', // URL to be displayed
+      url: 'https://wxsd-sales.github.io/roomos-webapps/video-signage#videoId=TJkz7oxIrOw&start=40&autoplay=1', // URL to be displayed
       target: 'OSD',  // The target screen, either OSD or Controller (Navigator)
       mode: 'Modal', // Can be Fullscreen or Modal
       autoclose: 40 // Time in seconds before web view auto closes, remove or set to null to prevent auto close
     },
     {
       title: 'How to Join a Webex Meeting',
-      url: 'https://www.youtube.com/embed/GyXu1qQ8NsI?start=40&autoplay=1',
+      url: 'https://wxsd-sales.github.io/roomos-webapps/video-signage#videoId=GyXu1qQ8NsI&start=40&autoplay=1',
       target: 'OSD',
       mode: 'Fullscreen',
       autoclose: 40
     },
     {
       title: 'How to Join a Google Meeting',
-      url: 'https://www.youtube.com/embed/8JX-_FxsO8g?start=39&autoplay=1',
+      url: 'https://wxsd-sales.github.io/roomos-webapps/video-signage#videoId=8JX-_FxsO8g&start=39&autoplay=1',
       target: 'OSD',
       mode: 'Modal',
       autoclose: 30
     },
     {
       title: 'How to share your Laptop or Phone screen',
-      url: 'https://www.youtube.com/embed/TJkz7oxIrOw?start=62&autoplay=1',
+      url: 'https://wxsd-sales.github.io/roomos-webapps/video-signage#videoId=TJkz7oxIrOw&start=62&autoplay=1',
       target: 'Controller',
       mode: 'Modal',
       autoclose: 30
     },
     {
       title: 'How to Share using Airplay',
-      url: 'https://www.youtube.com/embed/u4fv9qqL37U?autoplay=1',
+      url: 'https://wxsd-sales.github.io/roomos-webapps/video-signage#videoId=u4fv9qqL37U&autoplay=1',
       target: 'Controller',
       mode: 'Fullscreen',
       autoclose: 40
@@ -75,46 +78,58 @@ const config = {
 **********************************************************/
 
 let loading = false;
+let timers = {};
 
-xapi.Event.UserInterface.Extensions.Event.PageClosed.on(processPageClose);
+
+// Only run macro if webengine is supported
+xapi.Config.WebEngine.Mode.set('On')
+  .then(result => {
+    xapi.Config.WebEngine.Features.Peripherals.AudioOutput.set('On');
+
+    createPanel(config.button, config.content, config.panelId);
+    updatedUI();
+    // Start listening to Events and Statuses
+    xapi.Event.UserInterface.Extensions.Widget.Action.on(processWidget);
+    xapi.Event.UserInterface.Extensions.Event.PageClosed.on(processPageClose);
+    xapi.Status.UserInterface.WebView.on(updatedUI);
+  })
+  .catch(error => console.warn('Unable to enable WebEgine, the feature may not be supported on this device.'))
 
 // Close the Webview on the OSD if the panel has been closed on the touch
-function processPageClose(event){
-  if(event.PageId != config.panelId+'-page') return;
-  if(!config.button.closeContentWithPanel) return;
-  if(loading)return;
+function processPageClose(event) {
+  if (event.PageId != config.panelId + '-page') return;
+  if (!config.button.closeContentWithPanel) return;
+  if (loading) return;
 
   console.log('User Guide Panel has been closed, closing open content');
   xapi.Command.UserInterface.WebView.Clear({ Target: 'OSD' });
 }
 
-xapi.Config.WebEngine.Mode.set('On')
-  .then(result => {
-    createPanel(config.button, config.content, config.panelId);
-    updatedUI();
-    // Start listening to Events and Statuses
-    xapi.Event.UserInterface.Extensions.Widget.Action.on(processWidget);
-    xapi.Status.UserInterface.WebView.on(updatedUI);
-    xapi.Config.WebEngine.Features.Peripherals.AudioOutput.set('On');
-  })
-  .catch(error => console.warn('Unable to enable WebEgine, the feature may not be supported on this device.'))
-  
-let timers = {};
-
-async function openWebview(content) {
+async function openWebview(content, PeripheralId) {
   const target = await convertTarget(content.target)
 
   clearTimeout(timers[target])
 
   console.log(`Opening [${content.title}] on [${target}]`);
   loading = true;
-  setTimeout(()=>{
+  setTimeout(() => {
     loading = false;
   }, 1000)
+
+  const targetPeripheral = {}
+
+  if (target == 'OSD') {
+    targetPeripheral.Target = 'OSD'
+  } else if (target == 'Controller' && typeof PeripheralId != 'undefined') {
+    targetPeripheral.PeripheralId = PeripheralId
+  } else {
+    targetPeripheral.Target = 'Controller'
+  }
+
   xapi.Command.UserInterface.WebView.Display({
     Mode: content.mode,
     Title: content.title,
-    Target: target,
+    ...targetPeripheral,
     Url: content.url
   })
     .then(result => {
@@ -134,13 +149,13 @@ async function closeWebview(target) {
 
 // Identify if there are any in room navigators
 function convertTarget(target) {
-  if(target === 'OSD') return 'OSD';
+  if (target === 'OSD') return 'OSD';
   return xapi.Status.Peripherals.ConnectedDevice.get()
     .then(devices => {
       const navigators = devices.filter(d => {
         return d.Name.endsWith('Room Navigator') && d.Location == 'InsideRoom'
       })
-      if( navigators.length == 0){
+      if (navigators.length == 0) {
         console.log(`No in room navigators, changing WebView target to OSD`);
         return 'OSD';
       } else {
@@ -154,18 +169,18 @@ function convertTarget(target) {
 }
 
 // Process Widget Clicks
-async function processWidget(e) {
-  if (e.Type !== 'clicked' || !e.WidgetId.startsWith(config.panelId+'-option')) return
+async function processWidget({ WidgetId, Type, Origin, PeripheralId, Value }) {
+  if (Type !== 'clicked' || !WidgetId.startsWith(config.panelId + '-option')) return
   const widgets = await xapi.Status.UserInterface.Extensions.Widget.get();
-  const widget = widgets.filter(widget => widget.WidgetId == e.WidgetId);
-  const num = e.WidgetId.split('-').pop();
+  const widget = widgets.filter(widget => widget.WidgetId == WidgetId);
+  const num = WidgetId.split('-').pop();
   console.log(`User Guide Button Clicked [${config.content[num].title}]`)
-  if (widget[0].Value == 'active') {
+  if (Value == 'active') {
     console.log(`Content [${config.content[num].title}] already active, closing`)
     closeWebview(config.content[num].target);
     return;
   }
-  openWebview(config.content[num]);
+  openWebview(config.content[num], PeripheralId);
 }
 
 // Updates the UI and show which content is visiable 
@@ -175,9 +190,9 @@ async function updatedUI() {
   console.log(`Number of WebViews [${views.length}]`);
   config.content.forEach((content, index) => {
     const visiable = views.filter(view => {
-      if(!compareURLs(view.URL, content.url)) return false;
-      return (view.Type =='Integration' && view.Status == 'Visible');
-      }).length > 0;
+      if (!compareURLs(view.URL, content.url)) return false;
+      return (view.Type == 'Integration' && view.Status == 'Visible');
+    }).length > 0;
     xapi.Command.UserInterface.Extensions.Widget.SetValue({
       Value: visiable ? 'active' : 'inactive',
       WidgetId: config.panelId + '-option-' + index
@@ -185,16 +200,19 @@ async function updatedUI() {
   })
 }
 
-function compareURLs(a, b){
+function compareURLs(a, b) {
   a = decodeURIComponent(a).trim();
   b = decodeURIComponent(b).trim();
   return a.includes(b)
 }
 
-function createPanel(button, content, panelId) {
+async function createPanel(button, content, panelId) {
   console.log(`Creating Panel [${panelId}]`);
+
+  const order = await panelOrder(panelId);
+
   let rows = '';
-  if(content == undefined || content.length < 0){
+  if (content == undefined || content.length < 0) {
     console.log(`No content available to show for [${panelId}]`);
     rows = `<Row><Widget>
             <WidgetId>${panelId}-no-content</WidgetId>
@@ -220,6 +238,7 @@ function createPanel(button, content, panelId) {
       <Icon>${button.icon}</Icon>
       <Color>${button.color}</Color>
       <Name>${button.name}</Name>
+      ${order}
       <ActivityType>Custom</ActivityType>
       <Page>
         <Name>${button.title}</Name>
@@ -228,6 +247,22 @@ function createPanel(button, content, panelId) {
         <Options>hideRowNames=1</Options>
       </Page>
     </Panel></Extensions>`;
-  
+
   return xapi.Command.UserInterface.Extensions.Panel.Save({ PanelId: panelId }, panel);
-} 
+}
+
+
+/*********************************************************
+ * Gets the current Panel Order if exiting Macro panel is present
+ * to preserve the order in relation to other custom UI Extensions
+ **********************************************************/
+async function panelOrder(panelId) {
+  const list = await xapi.Command.UserInterface.Extensions.List({
+    ActivityType: "Custom",
+  });
+  const panels = list?.Extensions?.Panel;
+  if (!panels) return "";
+  const existingPanel = panels.find((panel) => panel.PanelId == panelId);
+  if (!existingPanel) return "";
+  return `<Order>${existingPanel.Order}</Order>`;
+}
